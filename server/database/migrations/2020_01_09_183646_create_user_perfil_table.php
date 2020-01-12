@@ -13,11 +13,11 @@ class CreateUserPerfilTable extends Migration
      */
     public function up()
     {
-        Schema::create('user_perfil', function (Blueprint $table) {
+        Schema::create('perfil_user', function (Blueprint $table) {
             $table->bigInteger('user_id')->unsigned();
             $table->bigInteger('perfil_id')->unsigned();
-            $table->foreign('user_id')->references('id')->on('users');
-            $table->foreign('perfil_id')->references('id')->on('perfils');
+            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+            $table->foreign('perfil_id')->references('id')->on('perfils')->onDelete('cascade');
             $table->primary(['user_id', 'perfil_id']);
         });
     }
@@ -29,6 +29,9 @@ class CreateUserPerfilTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('user_perfil');
+        Schema::dropIfExists('user_perfil', function(Blueprint $table) {
+            $table->dropForeign('user_id');
+            $table->dropForeign('perfil_id');
+        });
     }
 }

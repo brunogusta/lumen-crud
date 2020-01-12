@@ -15,10 +15,10 @@ $router->group([
     'prefix' => 'api/v1',
 ], function () use ($router) {
     $router->post('login/','AuthController@login');
+    $router->get('logout/','AuthController@logout');
     $router->post('register/','AuthController@register');
-    $router->get('/users', 'UsersController@index');
-    $router->get('/users/{id}', 'UsersController@show');
-    // $router->post('/users', 'UsersController@store');
-    $router->patch('/users/{id}', 'UsersController@update');
-    $router->delete('/users/{id}', 'UsersController@destroy');
+    $router->get('users/', 'UsersController@index');
+    $router->get('users/{id}', 'UsersController@show');
+    $router->patch('users/', 'UsersController@update');
+    $router->delete('users/{id}', 'UsersController@destroy');
 });

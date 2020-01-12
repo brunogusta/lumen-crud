@@ -17,6 +17,19 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
 {
     use Authenticatable, Authorizable;
 
+
+
+    /**
+     * The perfils of user
+     *
+     *
+     */
+
+    public function perfils() {
+        return $this->belongsToMany(Perfil::class);
+    }
+
+
     /**
      * The attributes that are mass assignable
      *

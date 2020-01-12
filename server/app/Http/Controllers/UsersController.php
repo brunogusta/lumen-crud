@@ -15,7 +15,6 @@ class UsersController extends Controller
 {
     /** @var User */
     protected $user;
-
     /**
      * Create a new controller instance.
      *
@@ -28,42 +27,97 @@ class UsersController extends Controller
     }
 
     public function index() {
+        $isAdmin = $this->checkAdmin();
 
-        $users = User::all();
-        return $users;
+        if(!$isAdmin) {
+            return response()->json('Just admin users can get all users!', 401);
+        }
+
+        $users = User::with('perfils')->get();
+        return response()->json($users);
     }
 
     public function show($userId) {
+        $user = User::with('perfils')->where('id', $userId)->get();
 
-       $user = User::find($userId);
-
-       return $user;
-    }
-
-    public function uptade(Request $request, $userId) {
-        $user = $this->user->find($userId);
-
-        if(empty($user)) {
-            throw new Error('User not found');
+        if($user->isEmpty()) {
+            return response()->json('The user informed not exists!', 404);
         }
 
-        $user->update([
-            'name' => $request->input('name'),
-            'email' => $request->input('email'),
-        ]);
 
-        return response($user, 200);
+        $isAdmin = $this->checkAdmin();
+        $isSameUser = $this->validateSameUser($userId);
+
+
+        if(!$isAdmin && $isSameUser) {
+
+            return response()->json($user, 200);
+
+        } else if($isAdmin && !$isSameUser) {
+
+            return response()->json($user, 200);
+
+        } else {
+
+            return response()->json('Just admin users can check other users!', 401);
+        }
+    }
+
+    public function update(Request $request) {
+        $user = User::with('perfils')->where('id', $request->id)->get();
+
+        if($user->isEmpty()) {
+            return response()->json('The user informed not exists!', 404);
+        }
+
+        $isAdmin = $this->checkAdmin();
+        $isSameUser = $this->validateSameUser($request->id);
+
+
+
+        if($isAdmin) {
+            User::where('id', $request->id)->update([
+                'name' => $request->input('name'),
+                'email' => $request->input('email'),
+            ]);
+            //change perfil
+        }else if($isSameUser) {
+            User::where('id', $request->id)->update([
+                'name' => $request->input('name'),
+                'email' => $request->input('email'),
+            ]);
+        } else {
+            return response()->json('Just admin users can update other users!', 401);
+        }
+
+
+        $newUser = User::find($request->id);
+        return response()->json(['user' => $newUser, 'message' => 'User updated successfully!'], 200);
     }
 
     public function destroy($userId) {
-        $user = $this->user->find($userId);
-
-        if(empty($user)) {
-            throw new Error('User not found');
+        $user = User::with('perfils')->where('id', $userId)->get();
+        if($user->isEmpty()) {
+            return response()->json('The user informed not exists!', 404);
         }
 
-        $user->delete();
+        $isAdmin = $this->checkAdmin();
+        $isSameUser = $this->validateSameUser($userId);
 
-        return response('User successfully deleted.', 200);
+
+        if(!$isAdmin && $isSameUser) {
+
+            User::find($userId)->delete();
+            return response()->json('User deleted successfully', 200);
+
+        } else if($isAdmin && !$isSameUser) {
+
+            User::find($userId)->delete();
+            return response()->json('User deleted successfully', 200);
+
+        } else {
+
+            return response()->json('Just admin users can delete other users!', 401);
+        }
     }
 }

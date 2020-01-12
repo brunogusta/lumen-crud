@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\Hash;
 
 use  App\Models\User;
 
+use Illuminate\Support\Facades\DB;
+
 class AuthController extends Controller
 {
     /**
@@ -20,6 +22,7 @@ class AuthController extends Controller
      */
     public function register(Request $request)
     {
+
         if(User::where('email', $request->input('email'))->first()) {
             return response()->json(['error' => 'The email already exists'], 200);
         }
@@ -31,17 +34,31 @@ class AuthController extends Controller
             $plainPassword = $request->input('password');
             $user->password = app('hash')->make($plainPassword);
 
+
             $user->save();
 
+
+
+            User::find($user->id)->perfils()->attach(1);
+
+
+
+            $response = User::with('perfils')->where('id', $user->id)->get();
+
+
+
+
             $credentials = $request->only(['email', 'password']);
-            $user->token = Auth::attempt($credentials);
+
+            $token = Auth::claims(['email' => $user->email])->attempt($credentials);
+
 
             //return successful response
-            return response()->json(['user' => $user, 'message' => 'CREATED'], 200);
+            return response()->json(['user' => $response, 'token' => $token], 200);
 
         } catch (\Exception $e) {
             //return error message
-            return response()->json(['message' => 'User Registration Failed!'], 404);
+            return response()->json(['message' => 'User Registration Failed!', $e], 404);
         }
 
     }
@@ -57,19 +74,27 @@ class AuthController extends Controller
     {
         $user = User::where('email', $request->input('email'))->first();
 
+
+        if(!$user) {
+            return response()->json(['message' => 'This count not exists'], 404);
+        }
+
         if(!Hash::check($request->input('password'), $user->password)) {
-            return response()->json(['message' => 'Password Incorrect!'], 404);;
+            return response()->json(['message' => 'Password Incorrect!'], 404);
         }
 
         $credentials = $request->only(['email', 'password']);
 
 
-        if (!$token = Auth::attempt($credentials)) {
-            return response()->json(['message' => 'Unauthorized'], 401);
-        }
+        $user->token = Auth::claims(['email' => $user->email])->attempt($credentials);
 
-        $user->token = Auth::attempt($credentials);
-        return $user;
+        return response()->json(['user' => $user], 200);
+    }
+
+    public function logout(Request $request)
+    {
+        Auth::logout();
+        return redirect('/api/v1/login')->with(['message' => 'Successfully logged out']);
     }
 }
 
