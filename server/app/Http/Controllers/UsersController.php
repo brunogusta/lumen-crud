@@ -10,6 +10,8 @@ use Illuminate\Http\Response;
 
 use Illuminate\Support\Facades\Auth;
 
+use Illuminate\Support\Facades\DB;
+
 
 class UsersController extends Controller
 {
@@ -74,13 +76,18 @@ class UsersController extends Controller
         $isSameUser = $this->validateSameUser($request->id);
 
 
-
         if($isAdmin) {
             User::where('id', $request->id)->update([
                 'name' => $request->input('name'),
                 'email' => $request->input('email'),
             ]);
-            //change perfil
+
+            if($request->perfilId) {
+                DB::table('perfil_user')
+                    ->where('user_id', $request->id)
+                    ->update(['perfil_id' => $request->perfilId]);
+            }
+
         }else if($isSameUser) {
             User::where('id', $request->id)->update([
                 'name' => $request->input('name'),
