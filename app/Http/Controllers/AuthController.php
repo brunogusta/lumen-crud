@@ -24,7 +24,7 @@ class AuthController extends Controller
     {
 
         if(User::where('email', $request->input('email'))->first()) {
-            return response()->json(['error' => 'The email already exists'], 200);
+            return response()->json(['error' => 'The email already exists'], 404);
         }
 
         try {
